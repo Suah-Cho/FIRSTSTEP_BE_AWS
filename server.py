@@ -23,15 +23,6 @@ def json_default(value):
     return value.strftime('%Y-%m-%d')
   raise TypeError('not JSON serializable')  
 
-@app.route('/boardlist', methods=['GET'])
-def boardlist() :
-    con = getCon()
-    cursor = con.cursor()
-    cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
-    data = cursor.fetchall()
-
-    # 반환할 때 json형식으로 반환
-    return json.dumps(data, default=json_default)
 
 @app.route('/boardlist/<searchWordKey>/<searchWord>', methods=['GET'])
 def search(searchWordKey:str, searchWord:str) :
@@ -170,33 +161,6 @@ def boardWrite() :
 
   return id
 
-# Login.js 로그인
-@app.route('/login/<ID>/<password>', methods=['GET'])
-def login(ID:str, password:str) :
-
-  con = getCon()
-  cursor = con.cursor()
-  sql = "SELECT userId, ID, password, status FROM user WHERE ID = %s;"
-  cursor.execute(sql, ID)
-
-  user = cursor.fetchone()
-  print(user)
-
-  try :
-    if user['status'] == 'active':
-      if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
-        payload = {'userId' : user['userId'],
-                   'ID' : user['ID']}
-        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-        print(token)
-        return {'token' : token}
-      else :
-        return 'WRONG'
-    else :
-      return 'SINGOUT'
-  except :
-    return "NON"
-  
   
 # userid체크
 @app.route('/checkid/<token>', methods=['GET'])
