@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd  /home/ubuntu/ssgbay
+cd  /home/ubuntu/firststep
 
 echo ">>> run app --------------------------"
 
