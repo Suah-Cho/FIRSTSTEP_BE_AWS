@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-cd   /home/ubuntu/hello-flask
+cd   /home/ubuntu/firststep
 
 
 echo ">>> pip install ----------------------"
@@ -13,7 +13,7 @@ rm -rf appspec.yml requirements.txt
 
 
 echo ">>> change owner to ubuntu -----------"
-chown -R ubuntu /home/ubuntu/hello-flask
+chown -R ubuntu /home/ubuntu/firststep
 
 
 echo ">>> run app --------------------------"
