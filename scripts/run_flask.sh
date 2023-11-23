@@ -4,5 +4,4 @@ cd  /home/ubuntu/firststep
 
 echo ">>> run app --------------------------"
 
-cron
 python3 -u app.py > /dev/null 2> /dev/null < /dev/null &
