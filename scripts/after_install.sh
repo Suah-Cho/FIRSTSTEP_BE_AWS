@@ -17,4 +17,4 @@ chown -R ubuntu /home/ubuntu/hello-flask
 
 
 echo ">>> run app --------------------------"
-python3 app.py
+python3 -u app.py > /dev/null 2> /dev/null < /dev/null &
