@@ -1,5 +1,5 @@
 #!/bin/bash
 
 
-rm -rf /home/ubuntu/hello-flask
-mkdir  /home/ubuntu/hello-flask
+rm -rf /home/ubuntu/firststep
+mkdir  /home/ubuntu/firststep
