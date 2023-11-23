@@ -16,5 +16,5 @@ echo ">>> change owner to ubuntu -----------"
 chown -R ubuntu /home/ubuntu/firststep
 
 
-echo ">>> run app --------------------------"
-python3 -u app.py > /dev/null 2> /dev/null < /dev/null &
+# echo ">>> run app --------------------------"
+# python3 -u app.py > /dev/null 2> /dev/null < /dev/null &
