@@ -39,24 +39,24 @@ def getboardId(boardId : int):
   cursor = con.cursor()
 
   # cursor.execute("SELECT status FROM board WHERE boardId = {};".format(boardId)) 
-  cursor.execute("SELECT b.status , r.rent FROM board as b, rent as r WHERE b.boardId ={};".format(boardId)) 
+  # cursor.execute("SELECT b.status , r.rent FROM board as b, rent as r WHERE b.boardId ={};".format(boardId)) 
   
-  dataStatus = cursor.fetchall()
+  # dataStatus = cursor.fetchall()
   # boardStatus - unactive
-  print("========================================================")
-  print(dataStatus)
-  if dataStatus[0]["status"] == 'unactive' :
-    return "DELETE"
+  # print("========================================================")
+  # print(dataStatus)
+  # if dataStatus[0]["status"] == 'unactive' :
+    # return "DELETE"
   
   # boardStatus - active
-  else :
-    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rent, r.userId AS rentusreId  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+  #else :
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rent, r.userId AS rentusreId  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
     
-    data = cursor.fetchall()
-    cursor.close()
+  data = cursor.fetchall()
+  cursor.close()
       
-    # 반환할 때 json형식으로 반환
-    return json.dumps(data, default=json_default)
+  # 반환할 때 json형식으로 반환
+  return json.dumps(data, default=json_default)
 
 #Mypage.js 대여목록조회
 @app.route('/mypage/<userId>', methods=['GET'])
