@@ -3,9 +3,6 @@ import utils.utils as utils
 import pymysql
 import json, datetime
 from flask_cors import CORS
-import jwt
-
-SECRET_KEY='secret_key'
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -24,7 +21,6 @@ def json_default(value):
     return value.strftime('%Y-%m-%d')
   raise TypeError('not JSON serializable')  
 
-
 @app.route('/boardlist/<searchWordKey>/<searchWord>', methods=['GET'])
 def search(searchWordKey:str, searchWord:str) :
 
@@ -36,11 +32,8 @@ def search(searchWordKey:str, searchWord:str) :
   return json.dumps(data, default=json_default)
 
 # boardContent.js 게시물 상세정보
-@app.route('/board/detail/<boardId>/<token>', methods=['GET'])
-def getboardId(boardId : int, token : str):
-
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-  print(payload)
+@app.route('/board/detail/<boardId>', methods=['GET'])
+def getboardId(boardId : int):
 
   con = getCon()
   cursor = con.cursor()
@@ -59,23 +52,19 @@ def getboardId(boardId : int, token : str):
   else :
     cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rent, r.userId AS rentusreId  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
     
-    data = cursor.fetchone()
+    data = cursor.fetchall()
     cursor.close()
       
     # 반환할 때 json형식으로 반환
-    return { "boardData" : data,
-            "userData" : payload}
+    return json.dumps(data, default=json_default)
 
 #Mypage.js 대여목록조회
-@app.route('/mypage/<token>', methods=['GET'])
-def getRentList(token : str):
-  print("getRentList",token)
-
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-
+@app.route('/mypage/<userId>', methods=['GET'])
+def getRentList(userId : str):
+  print("getRentList",userId)
   con = getCon()
   cursor = con.cursor()
-  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.userId={} and rent ='inactive' ORDER BY b.createAt DESC;".format(payload['userId']))
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.userId={} and rent ='inactive' ORDER BY b.createAt DESC;".format(userId))
     
   data = cursor.fetchall()
   cursor.close()
@@ -84,12 +73,11 @@ def getRentList(token : str):
   return json.dumps(data, default=json_default)
 
 #Mypage.js 사용자 ID => name
-@app.route('/mypage/chageName/<token>', methods=['GET'])
-def chageIdToName(token : str):
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+@app.route('/mypage/chageName/<userId>', methods=['GET'])
+def chageIdToName(userId : str):
   con = getCon()
   cursor = con.cursor()
-  cursor.execute("SELECT name FROM user WHERE userId = {};".format(payload['userId']))
+  cursor.execute("SELECT name FROM user WHERE userId = {};".format(userId))
   data = cursor.fetchone()
   cursor.close()
   
@@ -161,19 +149,15 @@ def boardWrite() :
 
 
   return id
-
   
 # userid체크
-@app.route('/checkid/<token>', methods=['GET'])
-def checkid(token: str) :
-
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-  print(payload)
+@app.route('/checkid/<userId>', methods=['GET'])
+def checkid(userId: int) :
 
   con = getCon()
   cursor = con.cursor()
-  sql = "SELECT ID, userId FROM user WHERE userId = %s"
-  cursor.execute(sql, payload['userId'])
+  sql = "SELECT ID FROM user WHERE userId = %s"
+  cursor.execute(sql, userId)
   id = cursor.fetchone()
 
   return id
@@ -230,9 +214,9 @@ def createuser():
       return { 'msg':  msg, 'status' : 401}, { 'Content-Type': 'application/json' }
         
 
-    hashed_password = utils.hash_password(str(password))
+    # hashed_password = utils.hash_password(str(password))
 
-    user_info = [ name , ID , hashed_password, phoneNumber ]
+    user_info = [ name , ID , password, phoneNumber ]
 
     cursor.execute("INSERT INTO user(name, ID, password, phoneNumber) VALUES (%s, %s, %s, %s)", 
                   (user_info[0], user_info[1], user_info[2], user_info[3]))
@@ -244,16 +228,13 @@ def createuser():
   except Exception as e :
       return {'error': str(e)}
   
-@app.route('/signout/<token>', methods=['DELETE'])
-def signout(token:str) :
-
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-  print(payload)
+@app.route('/signout/<userId>', methods=['DELETE'])
+def signout(userId:int) :
   
   con = getCon()
   cursor = con.cursor()
   sql = "UPDATE user SET status = 'inactive' WHERE userId = %s and status = 'active';"
-  cursor.execute(sql, payload['userId'])
+  cursor.execute(sql, userId)
   cursor.connection.commit()
 
   return "성공적으로 회원탈퇴되었습니다."
@@ -261,13 +242,11 @@ def signout(token:str) :
 @app.route('/commentWrite', methods=['POST'])
 def commentwrite() :
   commentData = request.get_json()
-  payload = jwt.decode(commentData['token'], SECRET_KEY, algorithms=['HS256'])
-  print(payload)
 
   con = getCon()
   cursor = con.cursor()
   cursor.execute("INSERT INTO comment(userId, boardId, content) VALUES (%s, %s, %s)", 
-                  (payload['userId'], commentData['boardId'], commentData['content']))
+                  (commentData['userId'], commentData['boardId'], commentData['content']))
   cursor.connection.commit()
   return '댓글이 정상적으로 입력되었습니다.'
 
@@ -292,45 +271,32 @@ def commentdelete(commentId:int) :
 
   return "삭제완료"
 
-@app.route('/checkpassword/<token>', methods=['POST'])
-def checkpassword(token: str) :
-  
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-  print("checkpassword payload", payload)
-
+@app.route('/checkpassword/<userId>', methods=['POST'])
+def checkpassword(userId: int) :
   password = request.get_json()
+  print(password['constpassword'], type(password['constpassword']))
   
   con = getCon()
   cursor = con.cursor()
   sql = "SELECT password FROM user WHERE userId=%s;"
-  cursor.execute(sql, payload['userId'])
+  cursor.execute(sql, userId)
   data = cursor.fetchone()
   print(data['password'], type(data['password']))
-
   
-
-  print(utils.verfifyPwd(password['constpassword'], data['password']))
-  
-  if utils.verfifyPwd(password['constpassword'], data['password']) :
+  if password['constpassword'] == data['password']) :
     return "CORRECT"
   else :
     return "WRONG"
 
-@app.route('/changepassword/<token>', methods=['PUT'])
-def changepassword(token:str):
+@app.route('/changepassword/<userId>', methods=['PUT'])
+def changepassword(userId:int):
   data = request.get_json()
-
-  payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-  print("payload", payload)
   print(data['newPassword'])
-
-  hash_newpassword = utils.hash_password(str(data['newPassword']))
-  print(hash_newpassword)
 
   con = getCon()
   cursor = con.cursor()
   sql = "UPDATE user SET password=%s WHERE userId=%s;"
-  cursor.execute(sql, (hash_newpassword, payload['userId']))
+  cursor.execute(sql, (data['newPassword'], userId))
   cursor.connection.commit()
 
   return "SUCCESS"
