@@ -283,7 +283,7 @@ def checkpassword(userId: int) :
   data = cursor.fetchone()
   print(data['password'], type(data['password']))
   
-  if password['constpassword'] == data['password']) :
+  if password['constpassword'] == data['password'] :
     return "CORRECT"
   else :
     return "WRONG"
